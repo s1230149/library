@@ -1,30 +1,29 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+template<typename T, T INF>
 class MinCostFlow{
 public:
   //辺を表す構造体(行き先、容量、コスト、逆辺)
-  typedef long long ctype;
-  ctype INF = 1LL<<55;
   
   struct edge{
     int to,cap;
-    ctype cost;
+    T cost;
     int rev;
     edge();
-    edge(int to,int cap,ctype cost,int rev):to(to),cap(cap),cost(cost),rev(rev){}
+    edge(int to,int cap,T cost,int rev):to(to),cap(cap),cost(cost),rev(rev){}
   };
   
   int V;                          //頂点数
   vector<vector<edge> > G;        //グラフの隣接リスト表現
-  vector<ctype> dist;             //最短距離
+  vector<T> dist;             //最短距離
   vector<int> prevv,preve;        //直前の頂点と辺
 
   MinCostFlow():V(-1){}
   MinCostFlow(int V):V(V), G(V), dist(V), prevv(V), preve(V){};
   
   // fromからtoへ向かう容量cap、コストcostの辺をグラフに追加する。
-  void add_edge(int from,int to,int cap ,ctype cost){
+  void add_edge(int from,int to,int cap ,T cost){
     assert(from>=0 && to >= 0);
     assert(from<V && to<V);
     G[from].push_back((edge){to,cap,cost,(int)G[to].size()});
@@ -33,8 +32,8 @@ public:
   
   //sからtへの流量fの最小費用流を求める
   //流せない場合-1を返す
-  ctype flow(int s, int t, int f){
-    ctype res = 0;
+  T flow(int s, int t, int f){
+    T res = 0;
 
     while(f>0){
       //ベルマンフォード法により,s-t間最短路を求める
@@ -74,3 +73,20 @@ public:
     return res;
   }
 };
+
+
+int main(){
+  int V, E, F;
+  cin>>V>>E>>F;
+
+  MinCostFlow<long long, 1LL<<55> f(V);
+  for(int i=0;i<E;i++){
+    int u, v, c, d;
+    cin>>u>>v>>c>>d;
+    f.add_edge(u, v, c, d);
+  }
+
+  int ans = f.flow(0, V-1, F);
+  cout<<ans<<endl;
+
+}
