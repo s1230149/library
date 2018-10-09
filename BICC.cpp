@@ -29,7 +29,7 @@ public:
     for(int nx:G[pos]) if(!B.isBridge(pos,nx)) dfs(nx);
   }
   
-  int bcc(bool makeT = 0){
+  int build(bool makeT = 0){
     B.build();
     used.clear();used.resize(V,0);
     cmp.clear();cmp.resize(V,0);
@@ -58,4 +58,6 @@ public:
     
     for(int i=0;i<K;i++) if(par[i] == -1) dfs(i,-1);
   }
+
+  bool same(int u,int v){return cmp[u] == cmp[v];}
 };

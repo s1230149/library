@@ -63,7 +63,7 @@ public:
 
   void build(){
     ok = 1;
-    buildBackEdge();
+    buildFailEdge();
     nextMatch.resize(size());
     for(int i=1;i<size();i++) nextMatch[i] = failEdge(i);
     nextMatch[0] = -1;
@@ -97,7 +97,7 @@ public:
   }
   
 private:
-  void buildBackEdge(){
+  void buildFailEdge(){
     const int root = 0;
     queue<int> Q;
     Q.push(root);
@@ -136,6 +136,46 @@ void check(){
   auto Idx = aho.matchedIdx(s);
   //for(int i=0;i<(int)s.size();i++) pr(i, s[i], Idx[i]);
   
+}
+
+void AtCoder_joisc2010_dna(){
+  auto func = [](char ch){
+    if(ch == 'A') return 0;
+    if(ch == 'T') return 1;
+    if(ch == 'G') return 2;
+    if(ch == 'C') return 3;
+    assert(0);
+    return -1;
+  };
+  AhoCorasick <4> aho(func);
+  int n;
+  cin>>n;
+  string target;
+  cin>>target;
+  for(int i=0;i<n;i++){
+    string s;
+    cin>>s;
+    aho.addWord(s);
+  }
+  aho.build();
+  auto Idx = aho.matchedIdx(target);
+  int len = target.size();
+  const int INF = 1e9;
+  vector<int> dp(len+1, INF);
+  
+  dp[0] = 0;
+  for(int i=0;i<len;i++){
+    if(dp[i] == INF) continue;
+    for(int j = -20; j<=0 ;j++){
+      int k = i + j;
+      if(k < 0) continue;
+      for(int l:Idx[k]){
+	if(k + l - 1 <= i || k + l - 1 > len) continue;
+	dp[k + l - 1] = min(dp[k + l - 1], dp[i] + 1);
+      }
+    }
+  }
+  cout<<dp[len-1]<<endl;
 }
 
 void AOJ_2863(){
@@ -239,5 +279,6 @@ signed main(){
   //check();
   //AOJ_2212();
   //AOJ_2863();
+  //AtCoder_joisc2010_dna();
   return 0;
 }
