@@ -22,7 +22,7 @@ public:
   }
 
   //[l, r)にxを加算
-  T add(int l, int r, T x){
+  void add(int l, int r, T x){
     added = 1;
     assert(l <= r && 0 <= l && r <= n);
     A[l] = A[l] + x;

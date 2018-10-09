@@ -36,7 +36,7 @@ public:
 
   //[a,b)にxを加算 0オリジン
   void add (ll a,ll b,ll x){
-    // x %= mod;
+    // x = (mod + x % mod) % mod;
     if(a == b) return;
     a++;
     assert(a <= b && 1 <= a && b <= n);
