@@ -5,27 +5,9 @@ using namespace std;
 /*
   
   SparseTable
-  
-  値の途中変更は出来ない。最初の状態だけでQueryが欲しい時に有効。
-  
-  区間-(操作名) [option] 計算量(build)
-  
-  区間-(min) [0] O( N log(N) )
-  区間-(max) [1] O( N log(N) )
-  区間-(gcd) [2] O( N log(N) log(N) ) 
-  
-  [get]
-  gcd -> O( log(N) )
-  min -> O( 1 )
-  max -> O( 1 )
-  
-  N : 要素数
-  
-  注意
-  必ず全ての要素を初期化する。
-  buildを忘れないようにする。
-  
- */
+  構築: O(N * O(merge))
+  クエリ: O(merge)
+*/
 
 template<typename T>
 class SparseTable{
@@ -35,13 +17,14 @@ public:
   vector<vector<T> > Array;
   vector<int> Memo, Log;
   int ok = 0;
-  SparseTable(){}
   
-  SparseTable(int N, int option): 
-    N(N), option(option), Memo(N+1), Log(N+1){
+  SparseTable(){}
+  SparseTable(vector<T> val, int option = 0): 
+    N(val.size()), option(option), Memo(N+1), Log(N+1){
     LOG = 0;
     while(N >= (1<<LOG)) LOG++;
     Array = vector<vector<T> >(LOG,vector<T>(N));
+    Array[0] = val;
     
     vector<int> num(LOG);
     for(int i=0;i<LOG;i++){
@@ -50,9 +33,9 @@ public:
       num[i] = x;
     }
     for(int i=1;i<=N;i++) Memo[i] = *lower_bound(num.begin(), num.end(), ( i + 1 ) >> 1);
+    build();
   }
   
-  // k番目の値をvalにする。 ( 0 origin )
   void update(int k, T val){assert(0<=k && k < N); ok = 0; Array[0][k] = val; }
   
   inline T merge(const T &A,const T &B){
@@ -82,25 +65,33 @@ public:
   }
 };
 
-signed main(){
-  
+//https://code-festival-2014-qualb.contest.atcoder.jp/tasks/code_festival_qualB_d
+void code_festival_qualB_d(){
   int n;
   cin>>n;
-  SparseTable<long long> A( n, 0 );
-  
+  vector<int> A(n);
+  for(int i=0;i<n;i++) cin>>A[i];
+  SparseTable <int> st(A, 1);
+    
+  auto solve=[&](int i,int f){
+    int L = 0, R = n;
+    while(L + 1 < R){
+      int M = (L + R) / 2;
+      int l = i, r = i + f * M;
+      if(l > r) swap(l, r);
+      0 <= l && r < n && st.get(l, r+1) <= A[i]? (L=M):(R=M);
+    }
+    return L;
+  };
+
   for(int i=0;i<n;i++){
-    int a;
-    cin>>a;
-    A.update( i, a );
+    int ans = solve(i, 1) + solve(i, -1);
+    cout<<ans<<endl;
   }
-  
-  A.build();
-  
-  while(1){
-    int l, r;
-    cin>>l>>r;
-    cout<<A.get(l,r+1)<<endl;
-  }
-  
+}
+			   
+
+signed main(){
+  code_festival_qualB_d();
   return 0;
 }
