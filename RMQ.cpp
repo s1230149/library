@@ -25,7 +25,7 @@ public:
     dat[k]=a;
     while(k>0){
       k=(k-1)/2;
-      dat[k]=min(dat[k*2+1],dat[k*2+2]);
+      dat[k]=merge(dat[k*2+1],dat[k*2+2]);
     }
   }
   
