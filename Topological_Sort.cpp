@@ -46,7 +46,7 @@ public:
         in[nx].erase(v);
       }     
     }
-    for(int i=0;i<V;i++) if(!in.empty()) tp.clear(); // exist loop
+    for(int i=0;i<V;i++) if(!in[i].empty()) tp.clear(); // exist loop
     tmp = in;
     return tp;
   }
@@ -60,7 +60,7 @@ int main(){
   
   for(int i=0,a,b;i<m;i++)cin>>a>>b,A.add_edge(a,b);
   
-  A.dfs();
-  for(int i=0;i<n;i++)cout<<A.tp[i]<<endl;
+  auto ans = A.bfs();
+  for(int i=0;i<(int)ans.size();i++)cout<<ans[i]<<endl;
   return 0;
 }
