@@ -6,10 +6,9 @@ using namespace std;
   区間の値を変更する(RUQ)
  */
 
-template<typename dtype>
+template<typename dtype, dtype initValue /*範囲外の時に返す値*/>
 class RMQ{
 public : 
-  dtype initValue; //範囲外の時に返す値
   
   struct data{
     bool type; //0 - empty   , 1 - update
@@ -22,7 +21,7 @@ public :
   int toMax;          //0 -> RangeMin 1->RangeMax;
   
   RMQ(){n=-1;}
-  RMQ(int n_, dtype initValue, int toMax = 0):n_(n_),initValue(initValue),toMax(toMax){
+  RMQ(int n_, int toMax = 0):n_(n_),toMax(toMax){
     n=1;
     while(n<n_)n*=2;
     td.resize(2*n-1,(data){0,initValue});
@@ -50,7 +49,7 @@ public :
 
     dtype vl=dfs(a, b, x, flag, k*2+1, l, (l+r)/2);
     dtype vr=dfs(a, b, x, flag, k*2+2, (l+r)/2, r);
-    return flag? (dat[k] = merge(vl, vr)):min(vl,vr);
+    return flag? (dat[k] = merge(vl, vr)):merge(vl,vr);
   }
   
   //[l,r)の値をxに変更　update(l,r,x)
@@ -71,8 +70,8 @@ int main(){
   int q,n;
   cin>>n>>q;
   typedef long long ll;
-  RMQ <ll> T(n, INT_MAX);
-  
+  RMQ <ll, INT_MAX> T(n, 0);
+
   while(q--){
     int cmd,s,t,x;
     scanf("%d%d%d",&cmd,&s,&t);

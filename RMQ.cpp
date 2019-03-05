@@ -1,17 +1,16 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-template<typename dtype>
+template<typename dtype, dtype initValue/*範囲外のときに返す値*/>
 class RMQ{
 public:
-  dtype initValue; //範囲外のときに返す値。
   int n,n_;
   vector<dtype> dat;
   int toMax;
 
   //初期化
   RMQ(){n=-1;}
-  RMQ(int n_,dtype initValue,int toMax = 0):n_(n_),initValue(initValue),toMax(toMax){
+  RMQ(int n_,int toMax = 0):n_(n_),toMax(toMax){
     n=1;
     while(n<n_)n*=2;
     dat.resize(2*n-1,initValue);
@@ -48,8 +47,8 @@ int main(){
   int n,q;
   cin>>n>>q;
   typedef long long ll;
-  RMQ <ll> A(n,INT_MAX,0);
-
+  RMQ <ll, INT_MAX> A(n,0);
+  
   while(q--){
     int com,x,y;
     cin>>com>>x>>y;
