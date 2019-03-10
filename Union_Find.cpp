@@ -29,3 +29,7 @@ public:
 
   int size(int x){return sz[find(x)];}
 };
+
+int main(){
+
+}

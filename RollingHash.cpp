@@ -1,6 +1,10 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+/*
+modをしっかりとっているので定数倍遅い。
+unsigned long longにしてmodを取らないようにすると10倍近く早くなる。
+*/
 
 // 10000019, 10000079, 10000103, 10000121, 10000139
 // 1000000007, 1000000009, 1000000021, 1000000033, 1000000087
@@ -23,13 +27,13 @@ public:
     for(int i=1;i<=n;i++) k[i] = (k[i-1] * B) % mod;
   }
 
-  ll get(int l,int r){ //[l, r)
+  ll get(int l,int r)const{ //[l, r)
     assert(0<=l && r<=n && l<=r);
     return (mod + hash[r] - hash[l] * k[r-l] % mod) % mod;
   }
   
   //hash[a]とB.hash[b]からみて何文字一致してるか。
-  int count(int a, RollingHash &B, int b){
+  int count(int a, const RollingHash &B, int b){
     int L = 0, R = min( n - a, B.n - b ) + 1;
     while( L + 1 < R ){
       int M = ( L + R ) / 2;
