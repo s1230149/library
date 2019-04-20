@@ -274,11 +274,33 @@ void AOJ_2212(){
   }
 }
 
+void AOJ_ALDS1_11_B(){
+
+  AhoCorasick <26 * 2 + 10> aho([](char ch){
+      if(islower(ch)) return ch - 'a';
+      if(isupper(ch)) return 26 + ch - 'A';
+      return 26 * 2 + ch - '0';
+    });
+
+  string s, t;
+  cin>>s>>t;
+  aho.addWord(t);
+  aho.build();
+
+  auto ans = aho.matchedIdx(s);
+  int N = s.size();
+  for(int i=0;i<N;i++){
+    if(!ans[i].empty()) cout<<i<<endl;
+  }
+}
+
 
 signed main(){
   //check();
   //AOJ_2212();
   //AOJ_2863();
   //AtCoder_joisc2010_dna();
+  AOJ_ALDS1_11_B();
+  
   return 0;
 }
