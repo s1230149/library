@@ -3,11 +3,10 @@
 #define double long double
 using namespace std;
 
-typedef pair<int,int> P;
-
 class Math{
 public:
   typedef long long ll;
+  typedef pair<int,int> P;
   ll mod;
   Math(ll mod = 1e9+7):mod(mod){}
   
