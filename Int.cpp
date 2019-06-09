@@ -6,7 +6,7 @@ public:
   string val;
   Int():val("0"){}
   Int(string num,bool reversed=0){if(!reversed)R(num); val = num;}
-  Int(int num){val = to_string(num); R(val);}
+  Int(long long num){val = to_string(num); R(val);}
   
   void R(string &a){reverse(a.begin(),a.end());}
   bool neg(const string &a)const{return a.back() == '-';}
