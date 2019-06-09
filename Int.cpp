@@ -35,7 +35,7 @@ public:
   bool operator <   (Int b) {R(b.val); return *this < b.val;}
   template<class T> bool operator < (T b){return *this < Int(b);}
  
-   bool operator <   (string b) {
+  bool operator <   (string b) {
     R(b);
     const string &a = val;
     if(neg(a) != neg(b)) return neg(a)? 1:0;
@@ -204,11 +204,11 @@ signed main(){
   cout<<1%(-1000)<<endl;
   cout<<a++<<" "<<++b<<endl;
   
-  for(int i=-1000;i<1000;i++)
-    for(int j=-1000;j<1000;j++){
+  for(int i=-100;i<100;i++)
+    for(int j=-100;j<100;j++){
       cout<<i<<" "<<j<<endl;
-      Int a(to_string(i));
-      Int b(to_string(j));
+      Int a = i;
+      Int b = j;
       assert((i < j) == (a < b));
       assert((i <= j) == (a <= b));
       assert((i > j) == (a > b));
@@ -222,5 +222,6 @@ signed main(){
       assert(to_string(i / j) == to_string(a / b));
       assert(to_string(i % j) == to_string(a % b));
     }
+    
   return 0;
 }
