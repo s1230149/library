@@ -1,107 +1,137 @@
 #include <bits/stdc++.h>
-#define GET_MACRO(_1,_2,_3,_4,_5,_6,_7,_8,NAME,...) NAME
-#define pr(...) cerr<< GET_MACRO(__VA_ARGS__,pr8,pr7,pr6,pr5,pr4,pr3,pr2,pr1)(__VA_ARGS__) <<endl
-#define pr1(a) (#a)<<"="<<(a)<<" "
-#define pr2(a,b) pr1(a)<<pr1(b)
-#define pr3(a,b,c) pr1(a)<<pr2(b,c)
-#define pr4(a,b,c,d) pr1(a)<<pr3(b,c,d)
-#define pr5(a,b,c,d,e) pr1(a)<<pr4(b,c,d,e)
-#define pr6(a,b,c,d,e,f) pr1(a)<<pr5(b,c,d,e,f)
-#define pr7(a,b,c,d,e,f,g) pr1(a)<<pr6(b,c,d,e,f,g)
-#define pr8(a,b,c,d,e,f,g,h) pr1(a)<<pr7(b,c,d,e,f,g,h)
 using namespace std;
-using Int = long long;
-using _int = int;
-using ll = long long;
-using Double = long double;
-const Int INF = (1LL<<55)+1e9; // ~ 3.6 * 1e16
-const Int mod = (1e9)+7;
-const Double EPS = 1e-8;
-const Double PI = 6.0 * asin((Double)0.5);
-using P = pair<Int,Int>;
-using T = tuple<Int,Int,Int>;
-template<class T> T Max(T &a,T b){return a=max(a,b);}
-template<class T> T Min(T &a,T b){return a=min(a,b);}
-template<class T1, class T2> ostream& operator<<(ostream& o,pair<T1,T2> p){return o<<"("<<p.first<<","<<p.second<<")";}
-template<class T1, class T2, class T3> ostream& operator<<(ostream& o,tuple<T1,T2,T3> t){
-  return o<<"("<<get<0>(t)<<","<<get<1>(t)<<","<<get<2>(t)<<")";}
-template<class T1, class T2> istream& operator>>(istream& i,pair<T1,T2> &p){return i>>p.first>>p.second;}
-template<class T> ostream& operator<<(ostream& o,vector<T> &a){Int i=0;for(T t:a)o<<(i++?" ":"")<<t;return o;}
-template<class T> istream& operator>>(istream& i,vector<T> &a){for(T &t:a)i>>t;return i;}
-template<class T>void prArr(T a,string s=" "){Int i=0;for(T t:a)cout<<(i++?s:"")<<t;cout<<endl;}
 
-template<typename ctype>
+//O(|V||E|)
+template<typename ctype, ctype INF>
 class BellmanFord{
 public:
   double EPS = 1e-8;
   using T = tuple<int, int, ctype>;
   int V;
-  ctype INF;
+  vector<vector<int> > G, rG;
   vector<T> edge;
   BellmanFord():V(-1){}
-  BellmanFord(int V, ctype INF):V(V), INF(INF){}
-  
+  BellmanFord(int V):V(V), G(V), rG(V){}
+
   void add_edge(int from, int to,ctype cost){
     assert(0 <= from && from < V);
     assert(0 <= to && to < V);
     edge.push_back(T(from, to, cost));
+    G[from].push_back(to);
+    rG[to].push_back(from);
   }
-  
+
   void add_bidirectional_edge(int a,int b,ctype cost){
     add_edge(a, b, cost);
     add_edge(b, a, cost);
   }
 
   //s番目の頂点から各頂点への最短距離を求める。
-  vector<ctype> calcD(int start){
+  //グラフに負閉路があれば{}を返す。
+  vector<ctype> calcDistance(int start){
     assert(0 <= start && start < V);
     vector<ctype> D(V, INF);   //最短距離
     D[start] = 0;
-    
+
     int cnt = 0;
     bool update = true;
     while(update){
       if(++cnt > V) return {}; //負の閉路
       update = false;
       for(auto e:edge){
-	int from, to;
-	ctype cost;
-	tie(from, to, cost) = e;
-	ctype ncost = D[from] + cost;
-	if(abs(D[from] - INF) < EPS || ncost - D[to] > -EPS) continue;
-	D[to] = ncost;
-	update = true;
+        int from, to;
+        ctype cost;
+        tie(from, to, cost) = e;
+        ctype ncost = D[from] + cost;
+        if(abs(D[from] - INF) < EPS || ncost - D[to] > -EPS) continue;
+        //if(D[from] == INF || ncost >= D[to]) continue;
+        D[to] = ncost;
+        update = true;
       }
     }
     return D;
   }
+
+
+  //startからgoalへの最短距離を求める。
+  //startからgoalの経路上に負閉路があるか判定する。
+  ctype calcDistance(int start, int goal){
+    assert(0 <= start && start < V);
+    assert(0 <= goal && goal < V);
+
+    vector<int> visited(V, 0); //goalから到達可能なノード
+    function<void(int pos)> calcVisited = [&](int pos){
+      if(visited[pos]) return;
+      visited[pos] = 1;
+      for(int to:rG[pos]) calcVisited(to);
+    };
+    calcVisited(goal);
+
+    vector<ctype> D(V, INF);   //最短距離
+    D[start] = 0;
+    int cnt = 0;
+    bool update = true;
+    while(update){
+      if(++cnt > V) return -INF; //負の閉路
+      update = false;
+      for(auto e:edge){
+        int from, to;
+        ctype cost;
+        tie(from, to, cost) = e;
+        ctype ncost = D[from] + cost;
+        if(abs(D[from] - INF) < EPS || ncost - D[to] > -EPS || visited[to] == 0) continue;
+        //if(D[from] == INF || ncost >= D[to] || visited[to] == 0) continue;
+        D[to] = ncost;
+        update = true;
+      }
+    }
+    return D[goal];
+  }
 };
 
-signed main(){
-  srand((unsigned)time(NULL));
-  cin.tie(0);
-  ios_base::sync_with_stdio(0);
-  cout << fixed << setprecision(12);
+void ABC_137_E(){
+  using Int = long long;
+  const Int INF = 1LL<<55;
+  int N, M, P;
+  cin>>N>>M>>P;
 
+  BellmanFord<Int, INF> bf(N);
+  for(int i=0;i<M;i++){
+    int a, b, c;
+    cin>>a>>b>>c; a--, b--;
+    bf.add_edge(a, b, -c + P);
+  }
+  Int ans = bf.calcDistance(0, N-1);
+  if(ans == -INF) cout<<-1<<endl;
+  else cout<<max(0LL, -ans)<<endl;
+
+}
+
+void AOJ_GRL_1_B(){
   int N, M, start;
   cin>>N>>M>>start;
 
   typedef long long ll;
-  ll INF = 1e18;
-  BellmanFord <ll> bf(N,INF);
+  const ll INF = 1e18;
+  BellmanFord <ll, INF> bf(N);
   for(int i=0;i<M;i++){
     int from, to, cost;
     cin>>from>>to>>cost;
     bf.add_edge(from, to, cost);
   }
 
-  vector<ll> D = bf.calcD(start);
+  vector<ll> D = bf.calcDistance(start);
   if(D.empty()) cout<<"NEGATIVE CYCLE"<<endl;
   else {
     for(int i=0;i<N;i++)
       if(D[i] != INF) cout<<D[i]<<endl;
       else cout<<"INF"<<endl;
   }
-  
+}
+
+
+signed main(){
+  //ABC_137_E();
+  //AOJ_GRL_1_B();
   return 0;
 }
