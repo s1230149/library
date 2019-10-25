@@ -2,7 +2,7 @@
 #ifdef LOCAL_DEBUG
 #define DEBUG 1
 #define CERR if(DEBUG) cerr
-#define MACRO(_1,_2,_3,_4,_5,_6,_7,_8,NAME,...) NAME
+#define MACRO(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,NAME,...) NAME
 #define pr(...) CERR<<MACRO(__VA_ARGS__,pr10,pr9,pr8,pr7,pr6,pr5,pr4,pr3,pr2,pr1)(__VA_ARGS__)<<endl
 #define pr1(a) (#a)<<"="<<(a)<<" "
 #define pr2(a,b) pr1(a)<<pr1(b)
