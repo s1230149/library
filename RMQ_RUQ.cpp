@@ -1,82 +1,150 @@
 #include <bits/stdc++.h>
 using namespace std;
 /*
-  RMQ and RUQ
-  区間の最小値を得る(RMQ)
-  区間の値を変更する(RUQ)
- */
+  toMax == 0 -> 区間最小クエリ
+  toMin == 1 -> 区間最大クエリ
+  update(l, r, x): [l, r)の区間をxに更新
+  ifupdate(l, r, x): [l, r)の区間の値をxの方が(小さい/大きい)ければ更新
+  get(l, r): [l, r)の区間の値の(最大/最小)を取得
+*/
 
-template<typename dtype, dtype initValue /*範囲外の時に返す値*/>
+template<typename D, int useAssert = 1>
 class RMQ{
-public : 
-  
-  struct data{
-    bool type; //0 - empty   , 1 - update
-    dtype value;
+public :
+  struct T{ //遅延データ
+    int type; //0 - empty, 1 - update, 2 - ifUpdate
+    D value;
+    T(){}
+    T(int type, D value):type(type), value(value){}
   };
-  
-  int n,n_;
-  vector<dtype> dat;
-  vector<data> td;
+
+  int n, n_;
+  D initValue;        //範囲外の時に返す値
+  vector<D> dat;
+  vector<T> td;
   int toMax;          //0 -> RangeMin 1->RangeMax;
-  
+
   RMQ(){n=-1;}
-  RMQ(int n_, int toMax = 0):n_(n_),toMax(toMax){
+  RMQ(int n_, D initValue, int toMax = 0):n_(n_), initValue(initValue), toMax(toMax){
     n=1;
     while(n<n_)n*=2;
-    td.resize(2*n-1,(data){0,initValue});
-    dat.resize(2*n-1,initValue);
+    td.resize(2*n-1, T(0, initValue));
+    dat.resize(2*n-1, initValue);
   }
 
-  inline dtype merge(dtype a, dtype b){return toMax? max(a, b):min(a, b);}
-  
-  
-  dtype dfs(int a,int b,dtype x,bool flag,int k,int l,int r){
-    if(r <= a || b <= l) return flag? dat[k]:initValue;
+  //目的データのマージ
+  inline D mergeD(D l, D r){return toMax? max(l, r):min(l, r);}
+
+  //遅延データのマージ
+  inline T mergeT(const T &from,const T &to){
+    if(to.type == 0) return from;
+    if(from.type == 0) return to; //from-empty
+    if(to.type == 1) return to; //to-update;
+    if(to.type == 2) return T(from.type, mergeD(from.value, to.value)); //to-ifupdate
+    if(useAssert) assert(0);
+    T();
+  }
+
+  //目的データに遅延データを反映
+  inline void apply(D &a, const T &b){
+    if(b.type == 0) return;
+    if(b.type == 1) a = b.value; //update
+    else a = mergeD(a, b.value); // if-update
+  }
+
+    D dfs(int a, int b,const T x, int k, int l, int r){
+    if(r <= a || b <= l) return x.type == 0? initValue : dat[k];
     if(a <= l && r <= b){
-      if(flag == true){
-        td[k]=(data){1,x};
-        dat[k]=x;
-      }
+      td[k] = mergeT(td[k], x);
+      apply(dat[k], x);
       return dat[k];
     }
-    
-    if(td[k].type){
-      td[k].type = 0;
-      dat[k*2+1] = dat[k*2+2] = td[k].value;
-      td[k*2+1] = td[k*2+2] = (data){1,td[k].value};
+    int kl = k * 2 + 1, kr = k * 2 + 2;
+    { //遅延を子に反映
+      td[kl] = mergeT(td[kl], td[k]);
+      td[kr] = mergeT(td[kr], td[k]);
+      apply(dat[kl], td[k]);
+      apply(dat[kr], td[k]);
+      td[k] = T(0, initValue);
     }
+    D vl = dfs(a, b, x, kl, l, (l+r)/2);
+    D vr = dfs(a, b, x, kr, (l+r)/2, r);
+    return x.type == 0? mergeD(vl,vr) : (dat[k] = mergeD(vl, vr));
+  }
 
-    dtype vl=dfs(a, b, x, flag, k*2+1, l, (l+r)/2);
-    dtype vr=dfs(a, b, x, flag, k*2+2, (l+r)/2, r);
-    return flag? (dat[k] = merge(vl, vr)):merge(vl,vr);
-  }
-  
   //[l,r)の値をxに変更　update(l,r,x)
-  void update(int l,int r,dtype x){
-    assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
-    dfs(l, r, x, true, 0, 0, n);
+  void update(int l,int r, D x){
+    if(useAssert) assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
+    dfs(l, r,  T(1, x), 0, 0, n);
   }
-  
-  //[l,r)の最小値を得る　find(l,r);
-  dtype get(int l,int r){
-    assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
-    return dfs(l, r, initValue , false, 0 , 0 ,n);
+
+  //[l,r)の値をもしもxの方が小さければ変更　ifupdate(l,r,x)
+  //toMaxのときは[l,r)の値をもしもxの方が大きければ変更　ifupdate(l,r,x)
+  void ifupdate(int l,int r, D x){
+    if(useAssert) assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
+    dfs(l, r,  T(2, x), 0, 0, n);
+  }
+
+  //[l,r)の最小値を得る　get(l,r);
+  D get(int l,int r){
+    if(useAssert) assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
+    return dfs(l, r, T(0, initValue), 0 , 0 ,n);
   }
 };
 
-
-int main(){
-  int q,n;
-  cin>>n>>q;
+//ABC_140_E
+//ABC_146_F
+//ここから下は動作確認用
+class Rand{
+public:
   typedef long long ll;
-  RMQ <ll, INT_MAX> T(n, 0);
+  random_device rnd;//毎回異なる乱数
+  mt19937_64 mt; //unsigned 64bitメルセンヌ_ツイスタ [0, 2^66]
+  //mt19937 mt; //unsigned 32bitメルセンヌ_ツイスタ [0, 2^32]
 
-  while(q--){
-    int cmd,s,t,x;
-    scanf("%d%d%d",&cmd,&s,&t);
-    if(cmd==0)cin>>x,T.update(s,t+1,x);
-    else cout <<T.get(s,t+1)<<endl;
+  Rand():mt(rnd()){}
+  //Rand():mt((unsigned int)time(NULL)){};
+
+  ll get(){return mt()>>1;} //[0, (2^63)-1]
+  ll get(ll l,ll r){ //[l, r]
+    assert(l <= r);
+    return l + get() % (r - l + 1);
   }
+};
+
+void test(){
+  Rand rnd;
+  const int toMax = rnd.get(0, 1);
+  const int INF = toMax? -(1e9):1e9;
+  const int N = rnd.get(1, 10000);
+  vector<int> A(N, INF);
+  RMQ<int> B(N, INF, toMax);
+  auto update=[&](int l, int r, int x){for(int i=l;i<r;i++) A[i] = x;};
+  auto ifupdate=[&](int l, int r, int x){for(int i=l;i<r;i++) A[i] = toMax? max(A[i], x):min(A[i], x);};
+  auto get=[&](int l, int r){
+    if(l == r) return INF;
+    int res = A[l];
+    for(int i=l;i<r;i++) res = toMax? max(res, A[i]):min(res, A[i]);
+    return res;
+  };
+  int M = N * 100;
+  cout<<"start: N="<<N<<" toMax="<<toMax<<endl;
+  while(M--){
+    int type = rnd.get(0, 2);
+    int l = rnd.get(0, N-1);
+    int r = rnd.get(l, N);
+    int x = rnd.get(-1e8, 1e8);
+    if(type == 0){
+      int a = get(l, r);
+      int b = B.get(l, r);
+      assert(a == b);
+    }
+    if(type == 1) update(l, r, x), B.update(l, r, x);
+    if(type == 2) ifupdate(l, r, x), B.ifupdate(l, r, x);
+  }
+}
+
+signed main(){
+  while(1) test();
   return 0;
 }
