@@ -1,98 +1,75 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-/*Range Add Min(Max) Query*/
-/*区間加算、区間Min,区間Max*/
+/*Range Sum Update Query*/
 
+template<typename D, int useAssert = 1>
 class RSUQ{
-public: 
-  typedef long long ll;
-
-  //マージ可能な主データ型
-  struct D{
-    ll value;
-    D():value(0){} /*適切な値にする!!!!!!*/
-    D(ll value):value(value){}
-    bool operator < (D a)const {return value < a.value;}
+public :
+  struct T{ //遅延データ
+    int type; //0 - empty, 1 - update
+    D value;
+    T():type(0){}
+    T(int type, D value):type(type), value(value){}
   };
 
-  //遅延用の型  
-  struct T{
-    int type; //0 - empty   , 1 - update
-    ll value;
-    T():type(0),value(0){}
-    T(int type,ll value):type(type),value(value){}
-  };
-
-  
   int n, n_;
   vector<D> dat;
   vector<T> td;
-  D returnD = D(0); // 範囲外の時に返す値。
-  
+
   RSUQ(){n=-1;}
   RSUQ(int n_):n_(n_){
     n=1;
-    while(n < n_) n *= 2;
-    td.resize(2*n-1,T());
-    dat.resize(2*n-1,D());
-  }
-  
-  inline D merge(D a,D b){return a.value + b.value;}
-  
-  void delay(int k,int len){
-    if(td[k].type==0) return;
-    ll type = td[k].type;
-    ll v = td[k].value;
-    td[k].type = 0;
-    td[k].value = 0;
-    
-    len /= 2;
-    {
-      int l = k*2+1;
-      dat[l].value = v * len;
-      td[l].type = type;
-      td[l].value = v;
-    }
-    {
-      int r = k*2+2;
-      dat[r].value = v * len;
-      td[r].type = type;
-      td[r].value = v;
-    }
+    while(n<n_) n *= 2;
+    td.resize(2*n-1, T());
+    dat.resize(2*n-1, 0);
   }
 
-  D write(int k, D x, int len){
-    dat[k].value = x.value * len;
-    td[k].type = 1;
-    td[k].value = x.value;
-    return dat[k];
-  }
-  
-  D dfs(int a, int b, D x, bool flag, int k, int l, int r){
-    if(r <= a||b <= l) return flag? dat[k]:returnD;
-    if(a <= l && r <= b) return flag? write(k, x, r - l):dat[k];
-    delay(k, r - l);
-    D vl = dfs(a, b, x, flag, k*2+1, l, (l+r)/2);
-    D vr = dfs(a, b, x, flag, k*2+2, (l+r)/2, r);
-    return flag? (dat[k] = merge(vl, vr)):merge(vl, vr);
+  //目的データのマージ
+  inline D mergeD(D l, D r){return l + r;}
+
+  //遅延データのマージ
+  inline T mergeT(const T &from, const T &to){
+    if(to.type == 0) return from;
+    return to;
   }
 
-  //[l,r)の値をx変更　query(l,r,x)
-  void update(int l,int r,ll x){
-    assert(l <= r);
-    assert(0 <= l && l <= n);
-    assert(0 <= r && r <= n);
-    dfs(l, r, D(x), true, 0, 0, n);
+  //目的データに遅延データを反映
+  inline void apply(D &a, const T &b, int len){
+    if(b.type == 0) return;
+    a = b.value * len; //update
   }
-  
-  //[l,r)の合計値を得る　find(a,b);
-  ll find(int l,int r){
-    assert(l <= r);
-    assert(0 <= l && l <= n);
-    assert(0 <= r && r <= n);
-    D res = dfs(l, r, D(), false, 0, 0, n);
-    return res.value;
+
+  D dfs(int a, int b,const T x, int k, int l, int r){
+    if(r <= a || b <= l) return x.type == 0? 0 : dat[k];
+    if(a <= l && r <= b){
+      td[k] = mergeT(td[k], x);
+      apply(dat[k], x, r - l);
+      return dat[k];
+    }
+    int kl = k * 2 + 1, kr = k * 2 + 2;
+    { //遅延を子に反映
+      td[kl] = mergeT(td[kl], td[k]);
+      td[kr] = mergeT(td[kr], td[k]);
+      apply(dat[kl], td[k], (r - l)/2);
+      apply(dat[kr], td[k], (r - l)/2);
+      td[k] = T();
+    }
+    D vl = dfs(a, b, x, kl, l, (l+r)/2);
+    D vr = dfs(a, b, x, kr, (l+r)/2, r);
+    return x.type == 0? mergeD(vl,vr) : (dat[k] = mergeD(vl, vr));
+  }
+
+  //[l,r)の値をxに変更　update(l,r,x)
+  void update(int l,int r, D x){
+    if(useAssert) assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
+    dfs(l, r,  T(1, x), 0, 0, n);
+  }
+
+  //[l,r)の総和を得る　get(l,r);
+  D get(int l,int r){
+    if(useAssert) assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
+    return dfs(l, r, T(), 0 , 0 ,n);
   }
 };
 
@@ -100,8 +77,8 @@ public:
 signed main(){
   int n,q;
   cin>>n>>q;
-  
-  RSUQ rsuq(n);
+
+  RSUQ<int, 0> rsuq(n);
 
   while(q--){
     int cmd;
@@ -111,13 +88,13 @@ signed main(){
       cin>>s>>t>>x;
       rsuq.update(s,t+1,x);
     }
-    
+
     if(cmd == 1){
       int s,t;
       cin>>s>>t;
-      cout<<rsuq.find(s,t+1)<<endl;
+      cout<<rsuq.get(s,t+1)<<endl;
     }
   }
-  
+
   return 0;
 }

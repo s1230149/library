@@ -22,7 +22,6 @@ public :
   D initValue;        //datの初期値と範囲外の時に返す値
   vector<D> dat;
   vector<T> td;
-  int toMax;          //0 -> RangeMin 1->RangeMax;
 
   RMQ(){n=-1;}
   RMQ(int n_, D initValue):n_(n_), initValue(initValue){
