@@ -1,39 +1,39 @@
 #include <bits/stdc++.h>
 using namespace std;
 /*
-  toMax == 0 -> 区間最小クエリ
-  toMin == 1 -> 区間最大クエリ
+  toMaxQuery == 0 -> 区間最小クエリ
+  toMinQuery == 1 -> 区間最大クエリ
   update(l, r, x): [l, r)の区間をxに更新
   ifupdate(l, r, x): [l, r)の区間の値をxの方が(小さい/大きい)ければ更新
   get(l, r): [l, r)の区間の値の(最大/最小)を取得
 */
 
-template<typename D, int useAssert = 1>
+template<typename D, int toMaxQuery, int useAssert = 1>
 class RMQ{
 public :
   struct T{ //遅延データ
     int type; //0 - empty, 1 - update, 2 - ifUpdate
     D value;
-    T(){}
+    T():type(0){}
     T(int type, D value):type(type), value(value){}
   };
 
   int n, n_;
-  D initValue;        //範囲外の時に返す値
+  D initValue;        //datの初期値と範囲外の時に返す値
   vector<D> dat;
   vector<T> td;
   int toMax;          //0 -> RangeMin 1->RangeMax;
 
   RMQ(){n=-1;}
-  RMQ(int n_, D initValue, int toMax = 0):n_(n_), initValue(initValue), toMax(toMax){
+  RMQ(int n_, D initValue):n_(n_), initValue(initValue){
     n=1;
-    while(n<n_)n*=2;
-    td.resize(2*n-1, T(0, initValue));
+    while(n<n_)n *= 2;
+    td.resize(2*n-1, T());
     dat.resize(2*n-1, initValue);
   }
 
   //目的データのマージ
-  inline D mergeD(D l, D r){return toMax? max(l, r):min(l, r);}
+  inline D mergeD(D l, D r){return toMaxQuery? max(l, r):min(l, r);}
 
   //遅延データのマージ
   inline T mergeT(const T &from,const T &to){
@@ -42,7 +42,7 @@ public :
     if(to.type == 1) return to; //to-update;
     if(to.type == 2) return T(from.type, mergeD(from.value, to.value)); //to-ifupdate
     if(useAssert) assert(0);
-    T();
+    return T();
   }
 
   //目的データに遅延データを反映
@@ -52,7 +52,7 @@ public :
     else a = mergeD(a, b.value); // if-update
   }
 
-    D dfs(int a, int b,const T x, int k, int l, int r){
+  D dfs(int a, int b,const T x, int k, int l, int r){
     if(r <= a || b <= l) return x.type == 0? initValue : dat[k];
     if(a <= l && r <= b){
       td[k] = mergeT(td[k], x);
@@ -65,7 +65,7 @@ public :
       td[kr] = mergeT(td[kr], td[k]);
       apply(dat[kl], td[k]);
       apply(dat[kr], td[k]);
-      td[k] = T(0, initValue);
+      td[k] = T();
     }
     D vl = dfs(a, b, x, kl, l, (l+r)/2);
     D vr = dfs(a, b, x, kr, (l+r)/2, r);
@@ -118,7 +118,8 @@ void test(){
   const int INF = toMax? -(1e9):1e9;
   const int N = rnd.get(1, 10000);
   vector<int> A(N, INF);
-  RMQ<int> B(N, INF, toMax);
+  RMQ<int, 0> B_min(N, INF);
+  RMQ<int, 1> B_max(N, INF);
   auto update=[&](int l, int r, int x){for(int i=l;i<r;i++) A[i] = x;};
   auto ifupdate=[&](int l, int r, int x){for(int i=l;i<r;i++) A[i] = toMax? max(A[i], x):min(A[i], x);};
   auto get=[&](int l, int r){
@@ -136,11 +137,11 @@ void test(){
     int x = rnd.get(-1e8, 1e8);
     if(type == 0){
       int a = get(l, r);
-      int b = B.get(l, r);
+      int b = toMax? B_max.get(l, r):B_min.get(l, r);
       assert(a == b);
     }
-    if(type == 1) update(l, r, x), B.update(l, r, x);
-    if(type == 2) ifupdate(l, r, x), B.ifupdate(l, r, x);
+    if(type == 1) update(l, r, x), B_max.update(l, r, x), B_min.update(l, r, x);
+    if(type == 2) ifupdate(l, r, x), B_max.ifupdate(l, r, x), B_min.ifupdate(l, r, x);
   }
 }
 
