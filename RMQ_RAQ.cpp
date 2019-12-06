@@ -15,11 +15,11 @@ public :
     T(int type, D value):type(type), value(value){}
   };
   int n, n_;
-  D initValue;        //範囲外の時に返す値。
+  D returnD;        //範囲外の時に返す値。
   vector<D> dat;
   vector<T> td;
   RMAQ(){n=-1;}
-  RMAQ(int n_, D initValue):n_(n_), initValue(initValue){
+  RMAQ(int n_, D returnD):n_(n_), returnD(returnD){
     n=1;
     while(n<n_)n*=2;
     td.resize(2*n-1, T());
@@ -43,7 +43,7 @@ public :
   }
 
   D dfs(int a, int b,const T x, int k, int l, int r){
-    if(r <= a || b <= l) return x.type == 0? initValue:dat[k];
+    if(r <= a || b <= l) return x.type == 0? returnD:dat[k];
     if(a <= l && r <= b){
       td[k] = mergeT(td[k], x);
       apply(dat[k], x);
@@ -71,7 +71,7 @@ public :
   //[l,r)の最小値を得る　get(l,r);
   D get(int l,int r){
     if(useAssert) assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
-    return dfs(l, r, T(0, initValue), 0 , 0 ,n);
+    return dfs(l, r, T(0, returnD), 0 , 0 ,n);
   }
 };
 

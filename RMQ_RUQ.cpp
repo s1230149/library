@@ -19,16 +19,17 @@ public :
   };
 
   int n, n_;
-  D initValue;        //datの初期値と範囲外の時に返す値
+  D initD;        //datの初期値
+  D returnD;      //範囲外の時に返す値
   vector<D> dat;
   vector<T> td;
 
   RMQ(){n=-1;}
-  RMQ(int n_, D initValue):n_(n_), initValue(initValue){
+  RMQ(int n_, D initD):n_(n_), initD(initD), returnD(initD){
     n=1;
     while(n<n_)n *= 2;
     td.resize(2*n-1, T());
-    dat.resize(2*n-1, initValue);
+    dat.resize(2*n-1, initD);
   }
 
   //目的データのマージ
@@ -52,7 +53,7 @@ public :
   }
 
   D dfs(int a, int b,const T x, int k, int l, int r){
-    if(r <= a || b <= l) return x.type == 0? initValue : dat[k];
+    if(r <= a || b <= l) return x.type == 0? returnD : dat[k];
     if(a <= l && r <= b){
       td[k] = mergeT(td[k], x);
       apply(dat[k], x);
@@ -87,7 +88,7 @@ public :
   //[l,r)の最小値を得る　get(l,r);
   D get(int l,int r){
     if(useAssert) assert(l <= r), assert(l <= n && r <= n), assert(l >= 0 && r >= 0);
-    return dfs(l, r, T(0, initValue), 0 , 0 ,n);
+    return dfs(l, r, T(0, initD), 0 , 0 ,n);
   }
 };
 
